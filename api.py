@@ -7,12 +7,13 @@ app = Flask(__name__)
 def scrape_endpoint():
     # Get URL from request body
     url = request.json.get('url')
+    target_img_url = request.json.get('img_url')
 
     # Scrape website using Selenium
-    scraped_data = scrape_website(url)
+    scraped_data = scrape_website(url,target_img_url)
 
     # Return scraped data as JSON response
-    return jsonify(scraped_data)
+    return jsonify({'adurl': scraped_data})
 
 if __name__ == "__main__":
     app.run(debug=True)
