@@ -14,10 +14,14 @@ RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor
  && apt-get install -y google-chrome-stable \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Chromedriver matching Chrome version
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
-    CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d. -f1) && \
+
+# Install ChromeDriver matching Chrome
+RUN CHROME_VERSION=$(google-chrome --version | grep -o '[0-9.]*' | head -1) && \
+    echo "Chrome version: $CHROME_VERSION" && \
+    CHROME_MAJOR=$(echo "$CHROME_VERSION" | cut -d. -f1) && \
+    echo "Chrome major version: $CHROME_MAJOR" && \
     CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR) && \
+    echo "Chromedriver version: $CHROMEDRIVER_VERSION" && \
     wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     rm /tmp/chromedriver.zip && \
