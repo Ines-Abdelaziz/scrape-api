@@ -1,43 +1,56 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.9-slim
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    wget unzip curl gnupg libnss3 libgconf-2-4 \
-    libxss1 libappindicator3-1 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
-    fonts-liberation libasound2 xdg-utils \
+    wget \
+    unzip \
+    curl \
+    gnupg \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    libgbm1 \
+    libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google-linux-keyring.gpg \
- && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
- && apt-get update \
- && apt-get install -y google-chrome-stable \
- && rm -rf /var/lib/apt/lists/*
+# Install specific version of Chrome (114.0.5735.90)
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt install -y ./google-chrome-stable_current_amd64.deb && \
+    rm google-chrome-stable_current_amd64.deb
 
-
-# Install ChromeDriver matching Chrome
-RUN CHROME_VERSION=$(google-chrome --version | grep -o '[0-9.]*' | head -1) && \
-    echo "Chrome version: $CHROME_VERSION" && \
-    CHROME_MAJOR=$(echo "$CHROME_VERSION" | cut -d. -f1) && \
-    echo "Chrome major version: $CHROME_MAJOR" && \
-    CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR) && \
-    echo "Chromedriver version: $CHROMEDRIVER_VERSION" && \
+# Install matching Chromedriver (114.0.5735.90)
+RUN CHROMEDRIVER_VERSION=114.0.5735.90 && \
     wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     rm /tmp/chromedriver.zip && \
     chmod +x /usr/local/bin/chromedriver
 
-# Set workdir
+# Set display port to avoid crash
+ENV DISPLAY=:99
+
+# Set working directory
 WORKDIR /app
 
-# Copy your app files
+# Copy source code
 COPY . /app
 
-# Install python dependencies
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port
+# Expose Flask port
 EXPOSE 5000
 
-# Run your Flask app
+# Start the Flask app
 CMD ["python", "api.py"]
